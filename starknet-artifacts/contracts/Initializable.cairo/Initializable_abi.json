@@ -1,0 +1,19 @@
+[
+    {
+        "inputs": [],
+        "name": "initialized",
+        "outputs": [
+            {
+                "name": "res",
+                "type": "felt"
+            }
+        ],
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "initialize",
+        "outputs": [],
+        "type": "function"
+    }
+]
