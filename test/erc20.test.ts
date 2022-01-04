@@ -4,30 +4,9 @@ import { uint256 } from 'starknet';
 
 import config from './config';
 import Signer from './signer';
+import { feltToStr, strToFelt, uint256ToFelt } from './utils';
 
 const signer = new Signer(config.PRIVATE_KEY_1);
-
-function strToFelt(str: string): bigint {
-  const strB = Buffer.from(str);
-  return BigInt(
-    strB.reduce((memo, byte) => {
-      memo += byte.toString(16);
-      return memo;
-    }, '0x'),
-  );
-}
-
-function feltToStr(felt: bigint): string {
-  const newStrB = Buffer.from(felt.toString(16), 'hex');
-  return newStrB.toString();
-}
-
-function uint256ToFelt(uint: uint256.Uint256): { low: bigint; high: bigint } {
-  return {
-    low: BigInt(uint.low.toString()),
-    high: BigInt(uint.high.toString()),
-  };
-}
 
 describe('ERC20.cairo', function () {
   this.timeout('5m');
