@@ -21,3 +21,13 @@ export function uint256ToFelt(uint: uint256.Uint256): { low: bigint; high: bigin
     high: BigInt(uint.high.toString()),
   };
 }
+
+/**
+ * System helpers
+ */
+
+export const test = {
+  log: (str: string) => console.log('    ' + str),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  done: (module: any) => module.afterAll(() => process.stdout.write('\u0007')),
+};

@@ -5,15 +5,35 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math import assert_not_zero
 
 from contracts.token.ERC721_base import (
-    ERC721_initializer, ERC721_mint, ERC721_safe_mint, ERC721_burn, ERC721_is_approved_or_owner,
-    ERC721_clear_approval, ERC721_transfer, ERC721_safe_transfer, ERC721_approve,
-    ERC721_set_approval_for_all)
+    ERC721_initializer, ERC721_exists, ERC721_mint, ERC721_safe_mint, ERC721_burn,
+    ERC721_is_approved_or_owner, ERC721_clear_approval, ERC721_transfer, ERC721_safe_transfer,
+    ERC721_approve, ERC721_set_approval_for_all)
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         name : felt, symbol : felt):
     ERC721_initializer(name, symbol)
     return ()
+end
+
+#
+# Getters
+#
+
+# Returns the Uniform Resource Identifier (URI) for `token_id` token.
+@view
+func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        token_id : felt) -> (token_uri : felt):
+    let (exists) = ERC721_exists(token_id)
+    assert_not_zero(exists)  # ERC721Metadata: URI query for nonexistent token
+
+    let (base_uri) = _baseURI()
+    if base_uri == 0:
+        return (0)
+    else:
+        let uri = base_uri + token_id  # TODO find append function
+        return (uri)
+    end
 end
 
 #
@@ -140,6 +160,14 @@ end
 #
 # Internals
 #
+
+# Base URI for computing {token_uri}. If set, the resulting URI for each
+# token will be the concatenation of the `base_uri` and the `token_id`. Empty
+# by default, can be ovrriden in child contracts.
+func _baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        base_uri : felt):
+    return (0)
+end
 
 # Hook that is called before any token transfer. This includes minting
 # and burning.

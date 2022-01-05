@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { starknet } from 'hardhat';
-import { uint256 } from 'starknet';
 
+import Signer from '../lib/signer';
+import { feltToStr, strToFelt, test } from '../lib/utils';
 import config from './config';
-import Signer from './signer';
-import { feltToStr, strToFelt, uint256ToFelt } from './utils';
 
 const signer = new Signer(config.PRIVATE_KEY_1);
+const other = new Signer(config.PRIVATE_KEY_2);
 
-describe('ERC20.cairo', function () {
+describe('ERC721 - Cards.cairo', function () {
   this.timeout('5m');
 
   /**
@@ -16,18 +16,22 @@ describe('ERC20.cairo', function () {
    */
 
   this.beforeAll(async function () {
+    test.log('Deploying contracts...');
     const accountFactory = await starknet.getContractFactory('Account');
     const signerAccount = await accountFactory.deploy({ _public_key: signer.getStarkKey() });
     signer.account = signerAccount;
+    test.log('Signer account 1 deployed');
 
-    const initial_supply = uint256.bnToUint256(1000);
-    const erc20Factory = await starknet.getContractFactory('token/ERC20');
-    this.erc20 = await erc20Factory.deploy({
+    const otherAccount = await accountFactory.deploy({ _public_key: other.getStarkKey() });
+    other.account = otherAccount;
+    test.log('Signer account 2 deployed');
+
+    const cardsFactory = await starknet.getContractFactory('token/ERC721');
+    this.cards = await cardsFactory.deploy({
       name: strToFelt('Sekai'),
       symbol: strToFelt('SKI'),
-      initial_supply: uint256ToFelt(initial_supply),
-      recipient: signer.addressBN,
     });
+    test.log('Cards contract deployed\n');
   });
 
   /**
@@ -35,12 +39,14 @@ describe('ERC20.cairo', function () {
    */
 
   it('should have correct name', async function () {
-    const { name } = await this.erc20.call('name');
+    const { name } = await this.cards.call('name');
     expect(feltToStr(name)).to.be.equal('Sekai');
   });
 
   it('should have correct symbol', async function () {
-    const { symbol } = await this.erc20.call('symbol');
+    const { symbol } = await this.cards.call('symbol');
     expect(feltToStr(symbol)).to.be.equal('SKI');
   });
+
+  test.done(this);
 });

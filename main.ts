@@ -1,4 +1,4 @@
-const str = 'Hello';
+const str = 'Hello' + ' world';
 
 const strB = Buffer.from(str);
 const felt = BigInt(
@@ -11,4 +11,6 @@ const felt = BigInt(
 const newStrB = Buffer.from(felt.toString(16), 'hex');
 const newStr = newStrB.toString();
 
+console.log(felt.toString());
+console.log(felt.toString(16));
 console.log(newStr);
