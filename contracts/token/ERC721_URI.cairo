@@ -1,10 +1,11 @@
 %lang starknet
+%builtins pedersen range_check
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.math import assert_not_zero
 
-from contracts.token.ERC721_base import (
+from cairolib.token.ERC721_base import (
     ERC721_initializer, ERC721_exists, ERC721_mint, ERC721_safe_mint, ERC721_burn,
     ERC721_is_approved_or_owner, ERC721_clear_approval, ERC721_transfer, ERC721_safe_transfer,
     ERC721_approve, ERC721_set_approval_for_all)

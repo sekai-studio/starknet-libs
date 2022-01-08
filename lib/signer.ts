@@ -27,7 +27,7 @@ export default class Signer {
   public get address() {
     return this._account.address;
   }
-  public get addressBN() {
+  public get addressBigInt() {
     return BigInt(this._account.address);
   }
 

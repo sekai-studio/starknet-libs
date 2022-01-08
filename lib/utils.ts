@@ -1,4 +1,7 @@
+import { expect } from 'chai';
 import { uint256 } from 'starknet';
+
+import { StarknetError, TransactionError } from './signer';
 
 export function strToFelt(str: string): bigint {
   const strB = Buffer.from(str);
@@ -31,3 +34,23 @@ export const test = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   done: (module: any) => module.afterAll(() => process.stdout.write('\u0007')),
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function shouldFail(transaction: Promise<any>) {
+  try {
+    await transaction;
+    expect(true, 'Transaction should fail').to.be.eq(false);
+  } catch (e) {
+    const err = e as TransactionError;
+    expect(err.message).to.be.eq(StarknetError.TRANSACTION_FAILED);
+  }
+}
+
+export async function tryCatch(fn: () => Promise<void>) {
+  try {
+    await fn();
+  } catch (e) {
+    console.error(e);
+    expect(true, 'Test failed').to.be.eq(false);
+  }
+}
