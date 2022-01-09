@@ -12,15 +12,21 @@ enum TOKEN {
   MINTED,
   NOT_MINTED_BY_OWNER,
   MINTED_TWICE,
+  SAFE_MINTED,
+  MINTED_FOR_OTHER,
+  SAFE_MINTED_FOR_OTHER,
   TRANSFER,
+  SAFE_TRANSFER,
   NOT_OWNED_OR_APPROVED,
   TRANSFER_FROM_OWNER,
-  APPROVED,
-  OPERATOR,
+  SAFE_TRANSFER_FROM_OWNER,
+  APPROVED_TRANSFER,
+  SAFE_APPROVED_TRANSFER,
+  OPERATOR_TRANSFER,
+  SAFE_OPERATOR_TRANSFER,
   OPERATOR_APPROVAL,
   BURNED,
   BURNED_BY_OPERATOR,
-  NOT_BURNED_BY_OWNER,
   NOT_MINTED,
 }
 
@@ -71,24 +77,33 @@ describe('ERC721 - Cards.cairo', function () {
   });
 
   describe('Mint', function () {
-    // TODO fix safeMint
     it('should be mintable by owner', async function () {
       const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const nonce = await signer.getNonce();
 
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.MINTED]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.MINTED_TWICE]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.TRANSFER]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.NOT_OWNED_OR_APPROVED]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.TRANSFER_FROM_OWNER]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.APPROVED]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.OPERATOR]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.OPERATOR_APPROVAL]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.BURNED]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.BURNED_BY_OPERATOR]);
-      await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, TOKEN.NOT_BURNED_BY_OWNER]);
+      const tokens = [
+        TOKEN.MINTED,
+        TOKEN.MINTED_TWICE,
+        TOKEN.TRANSFER,
+        TOKEN.SAFE_TRANSFER,
+        TOKEN.NOT_OWNED_OR_APPROVED,
+        TOKEN.TRANSFER_FROM_OWNER,
+        TOKEN.SAFE_TRANSFER_FROM_OWNER,
+        TOKEN.APPROVED_TRANSFER,
+        TOKEN.SAFE_APPROVED_TRANSFER,
+        TOKEN.OPERATOR_TRANSFER,
+        TOKEN.SAFE_OPERATOR_TRANSFER,
+        TOKEN.OPERATOR_APPROVAL,
+        TOKEN.BURNED,
+        TOKEN.BURNED_BY_OPERATOR,
+      ];
+
+      for (let i = 0; i < tokens.length; i++) {
+        await signer.sendTransaction(this.cards.address, 'mint', [signer.addressBigInt, tokens[i]], nonce + i);
+      }
 
       const { balance: newBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
-      expect(newBalance).to.be.eq(currentBalance + 11n);
+      expect(newBalance).to.be.eq(currentBalance + BigInt(tokens.length));
     });
 
     it('should have correct token owner', async function () {
@@ -107,6 +122,15 @@ describe('ERC721 - Cards.cairo', function () {
       expect(newBalance).to.be.eq(currentBalance);
     });
 
+    it('should mint for other account', async function () {
+      const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await signer.sendTransaction(this.cards.address, 'mint', [other.addressBigInt, TOKEN.MINTED_FOR_OTHER]);
+
+      const { balance: newBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newBalance).to.be.eq(currentBalance + 1n);
+    });
+
     it('should not be mintable twice', async function () {
       const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
 
@@ -115,10 +139,38 @@ describe('ERC721 - Cards.cairo', function () {
       const { balance: newBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
       expect(newBalance).to.be.eq(currentBalance);
     });
+
+    it('should be safe mintable by owner', async function () {
+      const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+
+      await signer.sendTransaction(this.cards.address, 'safeMint', [signer.addressBigInt, TOKEN.SAFE_MINTED]);
+
+      const { balance: newBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      expect(newBalance).to.be.eq(currentBalance + 1n);
+    });
+
+    it('should only be safe mintable by owner', async function () {
+      const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await shouldFail(
+        other.sendTransaction(this.cards.address, 'safeMint', [signer.addressBigInt, TOKEN.NOT_MINTED_BY_OWNER]),
+      );
+
+      const { balance: newBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newBalance).to.be.eq(currentBalance);
+    });
+
+    it('should safe mint for other account', async function () {
+      const { balance: currentBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await signer.sendTransaction(this.cards.address, 'safeMint', [other.addressBigInt, TOKEN.SAFE_MINTED_FOR_OTHER]);
+
+      const { balance: newBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newBalance).to.be.eq(currentBalance + 1n);
+    });
   });
 
   describe('Transfer', () => {
-    // TODO fix safeTransfer
     it('should transfer owned token', async function () {
       const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
       const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
@@ -140,6 +192,38 @@ describe('ERC721 - Cards.cairo', function () {
 
       await shouldFail(
         other.sendTransaction(this.cards.address, 'transfer', [other.addressBigInt, TOKEN.NOT_OWNED_OR_APPROVED]),
+      );
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.NOT_OWNED_OR_APPROVED });
+      expect(owner).to.be.eq(signer.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance);
+    });
+
+    it('should safe transfer owned token', async function () {
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await signer.sendTransaction(this.cards.address, 'safeTransfer', [other.addressBigInt, TOKEN.SAFE_TRANSFER]);
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.TRANSFER });
+      expect(owner).to.be.eq(other.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance - 1n);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance + 1n);
+    });
+
+    it('should only safe transfer owned token', async function () {
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await shouldFail(
+        other.sendTransaction(this.cards.address, 'safeTransfer', [other.addressBigInt, TOKEN.NOT_OWNED_OR_APPROVED]),
       );
 
       const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.NOT_OWNED_OR_APPROVED });
@@ -191,10 +275,50 @@ describe('ERC721 - Cards.cairo', function () {
       expect(newOtherBalance).to.be.eq(currentOtherBalance);
     });
 
-    it('should approve other account', async function () {
-      await signer.sendTransaction(this.cards.address, 'approve', [other.addressBigInt, TOKEN.APPROVED]);
+    it('should safe transfer from owner of token', async function () {
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
 
-      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.APPROVED });
+      await signer.sendTransaction(this.cards.address, 'safeTransferFrom', [
+        signer.addressBigInt,
+        other.addressBigInt,
+        TOKEN.SAFE_TRANSFER_FROM_OWNER,
+      ]);
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.SAFE_TRANSFER_FROM_OWNER });
+      expect(owner).to.be.eq(other.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance - 1n);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance + 1n);
+    });
+
+    it('should not safe transfer if not approved', async function () {
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await shouldFail(
+        other.sendTransaction(this.cards.address, 'safeTransferFrom', [
+          signer.addressBigInt,
+          other.addressBigInt,
+          TOKEN.NOT_OWNED_OR_APPROVED,
+        ]),
+      );
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.NOT_OWNED_OR_APPROVED });
+      expect(owner).to.be.eq(signer.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance);
+    });
+
+    it('should approve other account', async function () {
+      await signer.sendTransaction(this.cards.address, 'approve', [other.addressBigInt, TOKEN.APPROVED_TRANSFER]);
+
+      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.APPROVED_TRANSFER });
       expect(approved_address).to.be.eq(other.addressBigInt);
     });
 
@@ -211,10 +335,30 @@ describe('ERC721 - Cards.cairo', function () {
       await other.sendTransaction(this.cards.address, 'transferFrom', [
         signer.addressBigInt,
         other.addressBigInt,
-        TOKEN.APPROVED,
+        TOKEN.APPROVED_TRANSFER,
       ]);
 
-      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.APPROVED });
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.APPROVED_TRANSFER });
+      expect(owner).to.be.eq(other.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance - 1n);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance + 1n);
+    });
+
+    it('should safe transfer if approved', async function () {
+      await signer.sendTransaction(this.cards.address, 'approve', [other.addressBigInt, TOKEN.SAFE_APPROVED_TRANSFER]);
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      await other.sendTransaction(this.cards.address, 'safeTransferFrom', [
+        signer.addressBigInt,
+        other.addressBigInt,
+        TOKEN.SAFE_APPROVED_TRANSFER,
+      ]);
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.APPROVED_TRANSFER });
       expect(owner).to.be.eq(other.addressBigInt);
 
       const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
@@ -224,7 +368,7 @@ describe('ERC721 - Cards.cairo', function () {
     });
 
     it('should revoke approval after transfer', async function () {
-      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.APPROVED });
+      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.APPROVED_TRANSFER });
       expect(approved_address).to.be.eq(0n);
     });
 
@@ -238,20 +382,20 @@ describe('ERC721 - Cards.cairo', function () {
       expect(approved_for_all).to.be.eq(1n);
     });
 
-    it('should be able to transfer as operator', async function () {
+    it('should transfer as operator', async function () {
       const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
       const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
 
-      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.OPERATOR });
+      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.OPERATOR_TRANSFER });
       expect(approved_address).to.be.not.eq(other.addressBigInt);
 
       await other.sendTransaction(this.cards.address, 'transferFrom', [
         signer.addressBigInt,
         other.addressBigInt,
-        TOKEN.OPERATOR,
+        TOKEN.OPERATOR_TRANSFER,
       ]);
 
-      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.OPERATOR });
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.OPERATOR_TRANSFER });
       expect(owner).to.be.eq(other.addressBigInt);
 
       const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
@@ -260,7 +404,29 @@ describe('ERC721 - Cards.cairo', function () {
       expect(newOtherBalance).to.be.eq(currentOtherBalance + 1n);
     });
 
-    it('should be able to approve as operator', async function () {
+    it('should safe transfer as operator', async function () {
+      const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: currentOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+
+      const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.OPERATOR_TRANSFER });
+      expect(approved_address).to.be.not.eq(other.addressBigInt);
+
+      await other.sendTransaction(this.cards.address, 'safeTransferFrom', [
+        signer.addressBigInt,
+        other.addressBigInt,
+        TOKEN.SAFE_OPERATOR_TRANSFER,
+      ]);
+
+      const { owner } = await this.cards.call('ownerOf', { token_id: TOKEN.OPERATOR_TRANSFER });
+      expect(owner).to.be.eq(other.addressBigInt);
+
+      const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
+      const { balance: newOtherBalance } = await this.cards.call('balanceOf', { owner: other.addressBigInt });
+      expect(newSignerBalance).to.be.eq(currentSignerBalance - 1n);
+      expect(newOtherBalance).to.be.eq(currentOtherBalance + 1n);
+    });
+
+    it('should approve as operator', async function () {
       await other.sendTransaction(this.cards.address, 'approve', [signer.addressBigInt, TOKEN.OPERATOR_APPROVAL]);
 
       const { approved_address } = await this.cards.call('getApproved', { token_id: TOKEN.OPERATOR_APPROVAL });
@@ -292,7 +458,7 @@ describe('ERC721 - Cards.cairo', function () {
       await signer.sendTransaction(this.cards.address, 'setApprovalForAll', [other.addressBigInt, 0]);
       const { balance: currentSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
 
-      await shouldFail(other.sendTransaction(this.cards.address, 'burn', [TOKEN.NOT_BURNED_BY_OWNER]));
+      await shouldFail(other.sendTransaction(this.cards.address, 'burn', [TOKEN.NOT_OWNED_OR_APPROVED]));
 
       const { balance: newSignerBalance } = await this.cards.call('balanceOf', { owner: signer.addressBigInt });
       expect(newSignerBalance).to.be.eq(currentSignerBalance);

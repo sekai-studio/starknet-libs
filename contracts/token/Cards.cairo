@@ -33,6 +33,7 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return ()
 end
 
+@external
 func safeMint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         to : felt, token_id : felt):
     Ownable_only_owner()

@@ -51,8 +51,8 @@ export default class Signer {
     nonce?: BigIntish,
   ) {
     if (nonce === undefined) {
-      const { res } = await account.call('get_nonce');
-      nonce = res;
+      const { nonce: nnc } = await account.call('getNonce');
+      nonce = nnc;
     }
 
     const selector = getSelectorFromName(selectorName);
@@ -85,6 +85,11 @@ export default class Signer {
     } = await this.buildTransaction(this._account, to, selectorName, calldata, nonce);
 
     return this._account.invoke('execute', { to: toBigInt(to), selector, calldata, nonce: nnc }, [r, s]);
+  }
+
+  async getNonce(): Promise<number> {
+    const { nonce } = await this._account.call('getNonce');
+    return Number(nonce);
   }
 }
 

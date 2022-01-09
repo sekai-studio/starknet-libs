@@ -338,7 +338,7 @@ func ERC721_is_approved_or_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin
     return (0)
 end
 
-# Internal function to invoke {IERC721Receiver-on_ERC721_received} on a target address.
+# Internal function to invoke {ERC721_Receiver_on_ERC721_received} on a target address.
 # The call is not executed if the target address is not a contract.
 #
 # - `sender` represents the provious owner of the given `token_id`
@@ -349,7 +349,7 @@ func ERC721_check_on_erc721_received{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         sender : felt, recipient : felt, token_id : felt):
     # TODO
-    assert_not_equal(sender, token_id)
-    assert_not_equal(recipient, token_id)  # ERC721: transfer to non ERC721Receiver implementer
+
+    assert_not_zero(1)  # ERC721: transfer to non ERC721Receiver implementer
     return ()
 end
