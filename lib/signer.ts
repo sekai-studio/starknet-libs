@@ -1,5 +1,5 @@
-import { ec } from 'elliptic';
-import { StarknetContract } from 'hardhat/types';
+import { StarknetContract } from '@shardlabs/starknet-hardhat-plugin/dist/types';
+import { KeyPair, Signature } from 'starknet';
 import { getKeyPair, getStarkKey, sign } from 'starknet/dist/utils/ellipticCurve';
 import { hashMessage } from 'starknet/dist/utils/hash';
 import { BigNumberish } from 'starknet/dist/utils/number';
@@ -16,7 +16,7 @@ export type TransactionError = {
 };
 
 export default class Signer {
-  private _starkKey: ec.KeyPair;
+  private _starkKey: KeyPair;
   private _account: StarknetContract;
   public set account(account: StarknetContract) {
     this._account = account;
@@ -39,7 +39,7 @@ export default class Signer {
     return BigInt(getStarkKey(this._starkKey));
   }
 
-  sign(msgHash: string): ec.Signature {
+  sign(msgHash: string): Signature {
     return sign(this._starkKey, msgHash);
   }
 
@@ -63,8 +63,8 @@ export default class Signer {
 
     return {
       selector: toBigInt(selector),
-      r: toBigInt(signature.r),
-      s: toBigInt(signature.s),
+      r: toBigInt(signature[0]),
+      s: toBigInt(signature[1]),
       nonce,
     };
   }
