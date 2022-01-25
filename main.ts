@@ -1,4 +1,4 @@
-import { feltToStr, strToFelt } from './lib/utils';
+import { feltArrToStr, feltToStr, strToFelt, strToFeltArr } from './lib/utils';
 
 const P = 2n ** 251n + 17n * 2n ** 192n + 1n;
 
@@ -68,23 +68,33 @@ function solution5() {
   console.log(rem <= P);
 }
 
-// solution5();
+function solution6() {
+  // eslint-disable-next-line quotes
+  const a_str = "Hello, my name is Jag. I'm the CTO of Sekai.";
+  const n = BigInt(a_str.length);
+  const a = strToFelt(a_str);
+  const a_1 = 256n ** (n - 1n);
+  const q = a / a_1;
+  const r = a % a_1;
 
-// eslint-disable-next-line quotes
-const a_str = "Hello, my name is Jag. I'm the CTO of Sekai.";
-const n = BigInt(a_str.length);
-const a = strToFelt(a_str);
-const a_1 = 256n ** (n - 1n);
-const q = a / a_1;
-const r = a % a_1;
+  console.log(a.toString(2));
+  console.log(a.toString(16));
+  console.log('---');
+  console.log(q.toString(2));
+  console.log(q.toString(16));
+  console.log('---');
+  console.log(r.toString(2));
+  console.log(r.toString(16));
+  console.log('---');
+  console.log(feltToStr(q * a_1 + r));
+}
 
-console.log(a.toString(2));
-console.log(a.toString(16));
-console.log('---');
-console.log(q.toString(2));
-console.log(q.toString(16));
-console.log('---');
-console.log(r.toString(2));
-console.log(r.toString(16));
-console.log('---');
-console.log(feltToStr(q * a_1 + r));
+function solution7() {
+  const str = 'Hello';
+  const felts = strToFeltArr(str);
+  console.log(felts);
+  const newStr = feltArrToStr(felts);
+  console.log(newStr);
+}
+
+solution7();

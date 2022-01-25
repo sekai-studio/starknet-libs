@@ -1,98 +1,148 @@
 %lang starknet
 %builtins pedersen range_check
 
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.starknet.common.syscalls import get_caller_address
-from starkware.cairo.common.math import assert_not_zero, assert_le
-from starkware.cairo.common.math_cmp import is_le
-from starkware.cairo.common.pow import pow
+from starkware.cairo.common.math import assert_le
 from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 
 const CHAR_MAX_VALUE = 256
 
-struct String:
-    member data : felt*
-    member length : felt
+@storage_var
+func baseURI_str(index : felt) -> (char : felt):
 end
 
 @storage_var
-func string() -> (res : String):
+func baseURI_len() -> (len : felt):
 end
 
 @constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(str : felt):
-    string.write(str)
+func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        str_len : felt, str : felt*):
+    write_to_store(str_len, str)
     return ()
 end
 
 @view
-func storedString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        str : felt):
-    let (str) = string.read()
-    return (str)
-end
-
-@view
-func length{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(str : felt) -> (
-        length : felt):
-    let (length) = _length(str)
-    return (length)
-end
-
-@external
-func append{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(str : felt):
-    let (curStr) = string.read()
-    let (newStr) = Strings_append(curStr, str)
-    string.write(newStr)
-    return ()
-end
-
-func Strings_append{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str1 : felt, str2 : felt) -> (str : felt):
-    alloc_locals
-    let (local shifted_str) = _shift(str1, 1)
-    local new_str = shifted_str + str2
-    return (new_str)
+func baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        str_len : felt, str : felt*):
+    let (str_len, str) = read_store()
+    return (str_len, str)
 end
 
 #
 # Internals
 #
 
-func _shift{range_check_ptr}(str : felt, shift : felt) -> (shifted_str : felt):
+func write_baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        str_len : felt, str : felt*):
+    baseURI_len.write(str_len)
+    if str_len == 0:
+        return ()
+    end
+
+    _write_to_store_loop(str_len, str)
+    return ()
+end
+
+func _write_to_store_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        index : felt, str : felt*):
+    if index == 0:
+        return ()
+    end
+
+    baseURI_str.write(index - 1, str[index - 1])
+    _write_to_store_loop(index - 1, str)
+    return ()
+end
+
+func read_baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+        str_len : felt, str : felt*):
     alloc_locals
-    let (local shifter) = pow(CHAR_MAX_VALUE, shift)
-    local shifted_str = str * shifter
-    return (shifted_str)
-end
-
-func _length{range_check_ptr}(str : felt) -> (length : felt):
-    struct LoopLocals:
-        member length : felt
-        member str : felt
+    let (str) = alloc()
+    let (local str_len) = baseURI_len.read()
+    if str_len == 0:
+        return (str_len, str)
     end
 
-    if str == 0:
-        return (0)
+    _read_store_loop(str_len, str)
+    return (str_len, str)
+end
+
+func _read_store_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        index : felt, str : felt*):
+    if index == 0:
+        return ()
     end
 
-    let initial_locs : LoopLocals* = cast(fp - 2, LoopLocals*)
-    initial_locs.length = 0; ap++
-    initial_locs.str = str; ap++
-
-    loop:
-    let prev_locs : LoopLocals* = cast(ap - LoopLocals.SIZE, LoopLocals*)
-    let locs : LoopLocals* = cast(ap, LoopLocals*)
-    locs.str = prev_locs.str / CHAR_MAX_VALUE; ap++
-    locs.length = prev_locs.length + 1
-    let (jump) = is_le(1, locs.str)
-    static_assert ap + 1 == locs + LoopLocals.SIZE
-    jmp loop if jump != 0; ap++
-
-    # Cap the number of steps.
-    let (__ap__) = get_ap()
-    let (__fp__, _) = get_fp_and_pc()
-    let n_steps = (__ap__ - cast(initial_locs, felt)) / LoopLocals.SIZE - 1
-    assert_le(n_steps, 251)
-    return (length=locs.length)
+    let (char) = baseURI_str.read(index - 1)
+    assert str[index - 1] = char
+    _read_store_loop(index - 1, str)
+    return ()
 end
+
+# func _felt_arr_to_store{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+#         str_len : felt, str : felt*):
+#     message_received.emit(str_len)
+#     baseURI_len.write(str_len)
+#     if str_len == 0:
+#         return ()
+#     end
+
+# let initial_index : felt* = cast(fp, felt*)
+#     [initial_index] = str_len - 1; ap++
+
+# loop:
+#     let prev_index : felt* = cast(ap - 1, felt*)
+#     let index : felt* = cast(ap, felt*)
+#     [index] = [prev_index] - 1; ap++
+#     baseURI_str.write(index=[index], value=str[[index]])
+#     jmp loop if [index] != 0
+
+# return ()
+# end
+
+# func _store_to_felt_arr{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+#         str_len : felt, str : felt*):
+#     let (str_len) = baseURI_len.read()
+#     let (str) = alloc()
+
+# let initial_index : felt* = cast(fp, felt*)
+#     [initial_index] = str_len; ap++
+
+# loop:
+#     let prev_index : felt* = cast(ap - 1, felt*)
+#     let index : felt* = cast(ap, felt*)
+#     [index] = [prev_index] - 1; ap++
+#     let (char) = baseURI_str.read(index=[index])
+#     assert str[[index]] = char
+#     jmp loop if [index] != 0
+
+# return (str_len, str)
+# end
+
+# func _store_to_felt_arr{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+#         str_len : felt, str : felt*):
+#     alloc_locals
+#     let (local str_len) = baseURI_len.read()
+#     let (str) = alloc()
+#     if str_len == 0:
+#         return (str_len, str)
+#     end
+
+# _write_to_arr_loop(str_len, str)
+
+# return (str_len, str)
+# end
+
+# func _write_to_arr_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+#         index : felt, str : felt*):
+#     let (char) = baseURI_str.read(index - 1)
+#     assert str[index - 1] = char
+
+# if (index - 1) == 0:
+#         return ()
+#     end
+
+# return _write_to_arr_loop(index - 1, str)
+# end

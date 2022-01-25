@@ -4,8 +4,8 @@ import { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
   cairo: {
-    version: '0.6.1', // needs docker active
-    // venv: 'active',
+    // version: '0.7.0', // needs docker active
+    venv: 'active',
   },
   networks: {
     devnet: {

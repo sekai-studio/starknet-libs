@@ -54,3 +54,12 @@ export async function tryCatch(fn: () => Promise<void>) {
     expect(true, 'Test failed').to.be.eq(false);
   }
 }
+
+export function strToFeltArr(str: string): bigint[] {
+  const strArr = str.split('');
+  return strArr.map(char => BigInt(Buffer.from(char)[0].toString(10)));
+}
+
+export function feltArrToStr(felts: bigint[]): string {
+  return felts.reduce((memo, felt) => memo + Buffer.from(felt.toString(16), 'hex').toString(), '');
+}
