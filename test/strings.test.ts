@@ -4,7 +4,7 @@ import { starknet } from 'hardhat';
 import { feltArrToStr, strToFeltArr, test } from '../lib/utils';
 
 // const BASE_STRING = 'https://api.sekai.gg/api/v1/assets/';
-const BASE_STRING = 'h';
+const BASE_STRING = 'https';
 
 describe('Strings.cairo', function () {
   this.timeout('5m');
@@ -26,27 +26,17 @@ describe('Strings.cairo', function () {
    * Run tests
    */
 
-  // it('should have correct base string', async function () {
-  //   const { str_len, str } = await this.strings.call('baseURI');
-  //   expect(str_len).to.be.equal(BigInt(BASE_STRING.length));
-  //   expect(feltArrToStr(str)).to.be.equal(BASE_STRING);
-  // });
-
   it('should have correct base string', async function () {
-    const { res } = await this.strings.call('tokenURI', { token_id: 10 });
-    console.log(res);
-    expect(true).to.be.true;
+    const { str_len, str } = await this.strings.call('baseURI');
+    console.log(str_len, str);
+    expect(str_len).to.be.equal(BigInt(BASE_STRING.length));
+    expect(feltArrToStr(str)).to.be.equal(BASE_STRING);
   });
 
-  // it('should append string', async function () {
-  //   try {
-  //     const strAppend = strToFelt('!');
-  //     await this.strings.invoke('append', { str: strAppend });
-  //     const { str } = await this.strings.call('storedString');
-  //     expect(feltToStr(str)).to.be.equal('Hello!');
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
+  // it('should append the token ID', async function () {
+  //   const token_id = 123456;
+  //   const { str } = await this.strings.call('tokenURI', { token_id });
+  //   expect(feltArrToStr(str)).to.be.equal(BASE_STRING + token_id);
   // });
 
   test.done(this);

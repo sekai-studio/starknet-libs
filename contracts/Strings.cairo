@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import unsigned_div_rem, assert_le
 from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.registers import get_ap, get_label_location
 
 const CHAR_MAX_VALUE = 256
 const ARRAY_MAX_INDEX = 2 ** 15
@@ -26,50 +27,67 @@ end
 @view
 func baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
         str_len : felt, str : felt*):
-    let (str_len, str) = read_baseURI()
-    return (str_len, str)
+    return read_store()
 end
 
-@view
-func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        token_id : felt) -> (q : felt, r : felt):
-    let (new_elem, unit) = unsigned_div_rem(token_id, 10)
-    return (new_elem, unit)
-end
+# @view
+# func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+#         token_id : felt) -> (str_len : felt, str : felt*):
+#     alloc_locals
+#     let (local id_str_len, id_str) = felt_to_string(token_id)
+#     let (baseURI_len, baseURI) = read_store()
+#     let (full_len) = path_join(baseURI_len, baseURI, id_str_len, id_str)
+
+# return (full_len, baseURI)
+# end
 
 #
 # Internals
 #
 
-# @view
-# func felt_to_string{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-#         elem : felt) -> (str_len : felt, str : felt*):
-#     let (inverted_str) = alloc()
-#     let (str_len) = _felt_to_string_loop(elem, inverted_str, index)
+func length{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (len : felt):
+    return (5)
+end
 
-# let (str) = alloc()
+func felt_to_string{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        elem : felt) -> (str_len : felt, str : felt*):
+    let (str_seed) = alloc()
+    return _felt_to_string_loop(elem, str_seed, 0)
+end
 
-# return (str_len, str)
-# end
+func _felt_to_string_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        elem : felt, str_seed : felt*, index : felt) -> (str_len : felt, str : felt*):
+    alloc_locals
+    assert_le(index, ARRAY_MAX_INDEX)
+    let str_arr = cast(str_seed - 1, felt*)
 
-# func _felt_to_string_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-#         elem : felt, inverted_str : felt*, index : felt) -> (str_len : felt):
-#     assert_le(index, ARRAY_MAX_INDEX)
-#     if elem == 0:
-#         assert inverted_str[index] = 48  # 48 is utf-8 for "0" in decimal
-#         return (index + 1)
-#     end
+    let (new_elem, unit) = unsigned_div_rem(elem, 10)
+    assert str_arr[0] = unit + '0'  # add 48 to a number in [0, 9] for utf-8 in decimal
+    if new_elem == 0:
+        return (index + 1, str_arr)
+    end
 
-# let (new_elem, unit) = unsigned_div_rem(elem, 10)
-#     assert inverted_str[index] = unit + 48  # add 48 to a number in [0, 10) for utf-8 in decimal
+    let (is_lower) = is_le(elem, new_elem)
+    if is_lower != 0:
+        return (index + 1, str_arr)
+    end
 
-# let (is_lower) = is_le(elem, new_elem)
-#     if is_lower != 0:
-#         return (index + 1)
-#     end
-#     let (str_len) = _felt_to_string_loop(new_elem, inverted_str, index + 1)
-#     return (str_len)
-# end
+    return _felt_to_string_loop(new_elem, str_arr, index + 1)
+end
+
+# Join to strings together as paths such that path_join("a/b/c", "d/e/f") returns "a/b/c/d/e/f"
+func path_join{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        base_len : felt, base : felt*, str_len : felt, str : felt*) -> (full_len : felt):
+    # 47 is '/' char in utf-8 decimal
+    if base[base_len - 1] == '/':
+        append(base_len, base, str_len, str)
+        return (base_len + str_len)
+    end
+
+    assert base[base_len] = '/'  # append the '/' to the first string
+    append(base_len + 1, base, str_len, str)
+    return (base_len + str_len + 1)
+end
 
 func append{syscall_ptr : felt*, range_check_ptr}(
         base_len : felt, base : felt*, str_len : felt, str : felt*):
@@ -78,6 +96,7 @@ func append{syscall_ptr : felt*, range_check_ptr}(
         return ()
     end
 
+    _append_loop(base_len, base, str_len, str)
     return ()
 end
 
@@ -118,11 +137,15 @@ func _write_to_store_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     return ()
 end
 
-func read_baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+func read_store{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
         str_len : felt, str : felt*):
     alloc_locals
     let (str) = alloc()
-    let (local str_len) = baseURI_len.read()
+
+    call length
+    let (ap_val) = get_ap()
+    local str_len : felt = [ap_val]
+
     if str_len == 0:
         return (str_len, str)
     end
