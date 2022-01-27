@@ -30,16 +30,16 @@ func baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     return read_store()
 end
 
-# @view
-# func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-#         token_id : felt) -> (str_len : felt, str : felt*):
-#     alloc_locals
-#     let (local id_str_len, id_str) = felt_to_string(token_id)
-#     let (baseURI_len, baseURI) = read_store()
-#     let (full_len) = path_join(baseURI_len, baseURI, id_str_len, id_str)
+@view
+func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        token_id : felt) -> (str_len : felt, str : felt*):
+    alloc_locals
+    let (local id_str_len, id_str) = felt_to_string(token_id)
+    let (baseURI_len, baseURI) = read_store()
+    let (full_len) = path_join(baseURI_len, baseURI, id_str_len, id_str)
 
-# return (full_len, baseURI)
-# end
+    return (full_len, baseURI)
+end
 
 #
 # Internals
@@ -142,9 +142,11 @@ func read_store{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     alloc_locals
     let (str) = alloc()
 
-    call length
-    let (ap_val) = get_ap()
-    local str_len : felt = [ap_val]
+    let (str_len) = baseURI_len.read()
+
+    # call length
+    # let (ap_val) = get_ap()
+    # local str_len : felt = [ap_val]
 
     if str_len == 0:
         return (str_len, str)
