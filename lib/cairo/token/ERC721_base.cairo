@@ -71,7 +71,9 @@ end
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
         balance : felt):
-    assert_not_zero(owner)  # ERC721: balance query for the zero address
+    with_attr error_message("ERC721: balance query for the zero address."):
+        assert_not_zero(owner)
+    end
 
     let (balance) = ERC721_balances.read(owner=owner)
     return (balance)
@@ -87,7 +89,9 @@ func ownerOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         token_id : felt) -> (owner : felt):
     alloc_locals
     let (local owner) = ERC721_owners.read(token_id=token_id)
-    assert_not_zero(owner)  # ERC721: owner query for nonexistent token
+    with_attr error_message("ERC721: owner query for nonexistent token."):
+        assert_not_zero(owner)
+    end
 
     return (owner)
 end
@@ -126,9 +130,13 @@ end
 # - `recipient` cannot be the zero address.
 func ERC721_mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         recipient : felt, token_id : felt):
-    assert_not_zero(recipient)  # ERC721: mint to the zero address
+    with_attr error_message("ERC721: mint to the zero address."):
+        assert_not_zero(recipient)
+    end
     let (exists) = ERC721_exists(token_id)
-    assert exists = 0  # ERC721: token already minted
+    with_attr error_message("ERC721: token already minted."):
+        assert exists = 0
+    end
 
     let (recipient_balance) = ERC721_balances.read(owner=recipient)
     ERC721_balances.write(recipient, recipient_balance + 1)
@@ -160,7 +168,9 @@ func ERC721_burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
         token_id : felt):
     alloc_locals
     let (exists) = ERC721_exists(token_id)
-    assert_not_zero(exists)  # ERC721: burn to non existent token
+    with_attr error_message("ERC721: burn to non existent token."):
+        assert_not_zero(exists)
+    end
 
     let (local owner) = ERC721_owners.read(token_id=token_id)
 
@@ -185,9 +195,15 @@ end
 func ERC721_transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         sender : felt, recipient : felt, token_id : felt):
     let (owner) = ERC721_owners.read(token_id=token_id)
-    assert_not_zero(sender)  # ERC721: transfer from the zero address
-    assert_not_zero(recipient)  # ERC721: transfer to the zero address
-    assert owner = sender  # ERC721: transfer from incorrect owner
+    with_attr error_message("ERC721: transfer from the zero address."):
+        assert_not_zero(sender)
+    end
+    with_attr error_message("ERC721: transfer to the zero address."):
+        assert_not_zero(recipient)
+    end
+    with_attr error_message("ERC721: transfer from incorrect owner."):
+        assert owner = sender
+    end
 
     let (sender_balance) = ERC721_balances.read(owner=sender)
     ERC721_balances.write(sender, sender_balance - 1)
@@ -230,11 +246,17 @@ end
 func ERC721_approve{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         caller : felt, spender : felt, token_id : felt):
     let (exists) = ERC721_exists(token_id)
-    assert_not_zero(exists)  # ERC721: approval to non existent token
-    assert_not_equal(caller, spender)  # ERC721: approval to current owner
+    with_attr error_message("ERC721: approval to non existent token."):
+        assert_not_zero(exists)
+    end
+    with_attr error_message("ERC721: approval to current owner."):
+        assert_not_equal(caller, spender)
+    end
 
     let (is_operator_or_owner) = ERC721_is_operator_or_owner(caller, token_id)
-    assert_not_zero(is_operator_or_owner)  # ERC721: approve caller is not owner nor approved for all
+    with_attr error_message("ERC721: approve caller is not owner nor approved for all."):
+        assert_not_zero(is_operator_or_owner)
+    end
 
     ERC721_token_approvals.write(token_id, spender)
     return ()
@@ -248,7 +270,9 @@ end
 func ERC721_clear_approval{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         token_id : felt):
     let (exists) = ERC721_exists(token_id)
-    assert_not_zero(exists)  # ERC721: clear approval to non existent token
+    with_attr error_message("ERC721: clear approval to non existent token."):
+        assert_not_zero(exists)
+    end
 
     ERC721_token_approvals.write(token_id, 0)
     return ()
@@ -262,7 +286,9 @@ end
 # - The `operator` cannot be the caller.
 func ERC721_set_approval_for_all{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         caller : felt, operator : felt, approved : felt):
-    assert_not_equal(caller, operator)  # ERC721: approve to caller
+    with_attr error_message("ERC721: approve to caller."):
+        assert_not_equal(caller, operator)
+    end
 
     ERC721_operator_approvals.write(caller, operator, approved)
     return ()
@@ -293,7 +319,9 @@ end
 func ERC721_is_operator_or_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         caller : felt, token_id : felt) -> (is_operator_or_owner : felt):
     alloc_locals
-    ERC721_exists(token_id)  # ERC721: spender query for nonexistent token
+    with_attr error_message("ERC721: spender query for nonexistent token."):
+        ERC721_exists(token_id)
+    end
 
     let (local owner) = ERC721_owners.read(token_id=token_id)
     if owner == caller:
@@ -312,7 +340,9 @@ end
 func ERC721_get_approved{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         token_id : felt) -> (approved_address : felt):
     let (exists) = ERC721_exists(token_id)
-    assert_not_zero(exists)  # ERC721: approved query for nonexistent token
+    with_attr error_message("ERC721: approved query for nonexistent token."):
+        assert_not_zero(exists)
+    end
 
     let (approved_address) = ERC721_token_approvals.read(token_id=token_id)
     return (approved_address)
@@ -349,7 +379,8 @@ func ERC721_check_on_erc721_received{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         sender : felt, recipient : felt, token_id : felt):
     # TODO
-
-    assert_not_zero(1)  # ERC721: transfer to non ERC721Receiver implementer
+    with_attr error_message("ERC721: approved query for nonexistent token."):
+        assert_not_zero(1)
+    end
     return ()
 end

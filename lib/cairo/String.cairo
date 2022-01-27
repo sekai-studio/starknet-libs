@@ -27,7 +27,9 @@ end
 func _felt_to_string_loop{range_check_ptr}(elem : felt, str_seed : felt*, index : felt) -> (
         str_len : felt, str : felt*):
     alloc_locals
-    assert_le(index, ARRAY_MAX_INDEX)
+    with_attr error_message("String : exceeding max string length 2^15"):
+        assert_le(index, ARRAY_MAX_INDEX)
+    end
     let str_arr = cast(str_seed - 1, felt*)
 
     let (new_elem, unit) = unsigned_div_rem(elem, 10)

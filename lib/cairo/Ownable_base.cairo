@@ -30,7 +30,9 @@ end
 func Ownable_only_owner{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (owner) = Ownable_owner.read()
     let (caller) = get_caller_address()
-    assert owner = caller
+    with_attr error_message("Ownable: must be owner to execute."):
+        assert owner = caller
+    end
     return ()
 end
 
