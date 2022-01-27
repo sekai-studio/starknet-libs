@@ -1,6 +1,10 @@
 {
   "name": "yonko-cards",
   "version": "1.0.0",
+  "author": {
+    "name": "Jag",
+    "email": "jag@sekai.gg"
+  },
   "license": "MIT",
   "scripts": {
     "compile": "hardhat starknet-compile",
