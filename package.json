@@ -7,7 +7,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "compile": "hardhat starknet-compile",
+    "compile:cairo": "hardhat starknet-compile",
     "net": "starknet-devnet",
     "start": "ts-node main.ts",
     "test": "hardhat test"
