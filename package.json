@@ -4,12 +4,9 @@
   "license": "MIT",
   "scripts": {
     "compile": "hardhat starknet-compile",
-    "mocha:remove": "mv ./test/mocha.d.ts ./",
-    "mocha:replace": "mv ./mocha.d.ts ./test/",
     "net": "starknet-devnet",
     "start": "ts-node main.ts",
-    "test": "hardhat test",
-    "test:hardhat": "yarn mocha:remove && yarn test && yarn mocha:replace || yarn mocha:replace"
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@shardlabs/starknet-hardhat-plugin": "^0.3.9",

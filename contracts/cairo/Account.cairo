@@ -14,7 +14,7 @@ from starkware.cairo.common.hash_state import (
 #
 
 struct Message:
-    member sender : felt
+    member sender : felt   
     member to : felt
     member selector : felt
     member calldata : felt*

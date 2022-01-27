@@ -4,6 +4,6 @@ yarn.lock
 
 starknet-artifacts/
 
-cairo-contracts/
+example-contracts/
 tests/
 cache/
