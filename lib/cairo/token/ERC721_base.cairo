@@ -127,8 +127,8 @@ end
 func ERC721_mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         recipient : felt, token_id : felt):
     assert_not_zero(recipient)  # ERC721: mint to the zero address
-    let (exist) = ERC721_exists(token_id)
-    assert exist = 0  # ERC721: token already minted
+    let (exists) = ERC721_exists(token_id)
+    assert exists = 0  # ERC721: token already minted
 
     let (recipient_balance) = ERC721_balances.read(owner=recipient)
     ERC721_balances.write(recipient, recipient_balance + 1)

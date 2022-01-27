@@ -9,8 +9,8 @@
   "scripts": {
     "compile:cairo": "hardhat starknet-compile",
     "net": "starknet-devnet",
-    "start": "ts-node main.ts",
-    "test": "hardhat test"
+    "start": "ts-node test.ts",
+    "test": "hardhat test --no-compile"
   },
   "devDependencies": {
     "@shardlabs/starknet-hardhat-plugin": "^0.3.9",

@@ -1,4 +1,4 @@
-import { feltArrToStr, feltToStr, strToFelt, strToFeltArr } from './lib/utils';
+import { feltArrToStr, shortStringFeltToStr, strToFeltArr, strToShortStringFelt } from './lib/starknet-ts/utils';
 
 const P = 2n ** 251n + 17n * 2n ** 192n + 1n;
 
@@ -8,7 +8,7 @@ const _str =
 
 const CHAR_SIZE = BigInt(16 ** 2);
 
-const str_n = strToFelt(_str);
+const str_n = strToShortStringFelt(_str);
 
 function solution2() {
   const rem: bigint[] = [];
@@ -30,7 +30,7 @@ function solution2() {
       return acc + P ** BigInt(i) * val;
     }, 0n);
 
-  console.log(feltToStr(rebuilt));
+  console.log(shortStringFeltToStr(rebuilt));
   console.log('Max str len', 31 * (rem.length + 1));
   console.log('N° val to return', rem.length + 1);
 }
@@ -48,7 +48,7 @@ function solution3() {
 
   const rebuilt_str_r = (r_str_n << ((length_n - 1n) * 8n)) + CHAR_SIZE ** (length_n - 1n);
   console.log('rebuilt_r_str_n', rebuilt_str_r.toString(16));
-  console.log(feltToStr(rebuilt_str_r));
+  console.log(shortStringFeltToStr(rebuilt_str_r));
 }
 
 function solution5() {
@@ -72,7 +72,7 @@ function solution6() {
   // eslint-disable-next-line quotes
   const a_str = "Hello, my name is Jag. I'm the CTO of Sekai.";
   const n = BigInt(a_str.length);
-  const a = strToFelt(a_str);
+  const a = strToShortStringFelt(a_str);
   const a_1 = 256n ** (n - 1n);
   const q = a / a_1;
   const r = a % a_1;
@@ -86,7 +86,7 @@ function solution6() {
   console.log(r.toString(2));
   console.log(r.toString(16));
   console.log('---');
-  console.log(feltToStr(q * a_1 + r));
+  console.log(shortStringFeltToStr(q * a_1 + r));
 }
 
 function solution7() {
@@ -97,4 +97,10 @@ function solution7() {
   console.log(newStr);
 }
 
-solution7();
+function test() {
+  const BASE_URI = 'https://api.sekai.gg/api/v1/assets/';
+  const arr = strToFeltArr(BASE_URI);
+  console.log(feltArrToStr(arr));
+}
+
+test();

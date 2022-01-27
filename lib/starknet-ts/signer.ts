@@ -69,22 +69,30 @@ export default class Signer {
     };
   }
 
-  async sendTransaction(
-    to: string,
-    selectorName: string,
-    calldata: BigIntish[],
-    nonce?: BigIntish,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) {
+  async sendTransaction(to: string, selectorName: string, calldata: (BigIntish | BigIntish[])[], nonce?: BigIntish) {
+    // Write arrays as [arr.length, arr[0], arr[1], ...]
+    const arrayFeltCalldata = calldata.reduce<BigIntish[]>((memo, value) => {
+      if (Array.isArray(value)) {
+        memo.push(BigInt(value.length));
+        memo.push(...value);
+      } else {
+        memo.push(value);
+      }
+      return memo;
+    }, []);
+
     // TODO type Contract
     const {
       selector,
       r,
       s,
       nonce: nnc,
-    } = await this.buildTransaction(this._account, to, selectorName, calldata, nonce);
+    } = await this.buildTransaction(this._account, to, selectorName, arrayFeltCalldata, nonce);
 
-    return this._account.invoke('execute', { to: toBigInt(to), selector, calldata, nonce: nnc }, [r, s]);
+    return this._account.invoke('execute', { to: toBigInt(to), selector, calldata: arrayFeltCalldata, nonce: nnc }, [
+      r,
+      s,
+    ]);
   }
 
   async getNonce(): Promise<number> {

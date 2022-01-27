@@ -3,7 +3,6 @@ node_modules/
 yarn.lock
 
 starknet-artifacts/
-
-example-contracts/
-tests/
 cache/
+
+strings.test.ts
