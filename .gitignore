@@ -4,5 +4,3 @@ yarn.lock
 
 starknet-artifacts/
 cache/
-
-strings.test.ts

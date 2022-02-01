@@ -1,5 +1,5 @@
 {
-  "name": "yonko-cards",
+  "name": "cairo-string",
   "version": "1.0.0",
   "author": {
     "name": "Jag",
@@ -7,16 +7,14 @@
   },
   "license": "MIT",
   "scripts": {
-    "compile:cairo": "hardhat starknet-compile",
+    "compile": "hardhat starknet-compile",
     "net": "starknet-devnet",
     "start": "ts-node test.ts",
     "test": "hardhat test --no-compile"
   },
   "devDependencies": {
     "@shardlabs/starknet-hardhat-plugin": "^0.3.9",
-    "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
-    "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.12",
     "@typescript-eslint/eslint-plugin": "^5.6.0",

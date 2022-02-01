@@ -69,7 +69,12 @@ export default class Signer {
     };
   }
 
-  async sendTransaction(to: string, selectorName: string, calldata: (BigIntish | BigIntish[])[], nonce?: BigIntish) {
+  async sendTransaction(
+    to: string,
+    selectorName: string,
+    calldata: (BigIntish | BigIntish[])[] = [],
+    nonce?: BigIntish,
+  ) {
     // Write arrays as [arr.length, arr[0], arr[1], ...]
     const arrayFeltCalldata = calldata.reduce<BigIntish[]>((memo, value) => {
       if (Array.isArray(value)) {
