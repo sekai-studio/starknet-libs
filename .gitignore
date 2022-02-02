@@ -8,3 +8,4 @@ cache/
 # Test & WIP files
 test.ts
 Math.cairo
+signer.ts
