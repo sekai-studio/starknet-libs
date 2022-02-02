@@ -4,3 +4,7 @@ yarn.lock
 
 starknet-artifacts/
 cache/
+
+# Test & WIP files
+test.ts
+Math.cairo
