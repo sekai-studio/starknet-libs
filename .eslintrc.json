@@ -57,6 +57,7 @@
         "quotes": ["error", "single"],
         "semi": ["error", "always"],
         "space-before-function-paren": 0,
-        "@typescript-eslint/no-non-null-assertion": 0
+        "@typescript-eslint/no-non-null-assertion": 0,
+        "@typescript-eslint/no-inferrable-types" : 0
     }
 }

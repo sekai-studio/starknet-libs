@@ -1,9 +1,10 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
 
 from lib.cairo.String import (
-    String_get, String_set, String_delete, String_append, String_path_join, String_felt_to_string)
+    String_get, String_set, String_delete, String_append, String_path_join, String_felt_to_string,
+    String_extract_last_char)
 
 const CORE_STRING = 'CORE_STRING'
 const BASE_URI = 'BASE_URI'
@@ -14,15 +15,25 @@ const APPENDED_STRING = 'APPENDED_STRING'
 #
 
 @view
-func readCoreString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        str_len : felt, str : felt*):
+func charExtraction{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(ss : felt) -> (ss_rem : felt, char : felt):
+    let (ss_rem, char) = String_extract_last_char(ss)
+    return (ss_rem, char)
+end
+
+@view
+func readCoreString{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}() -> (str_len : felt, str : felt*):
     let (str_len, str) = String_get(CORE_STRING)
     return (str_len, str)
 end
 
 @view
-func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        token_id : felt) -> (str_len : felt, str : felt*):
+func tokenURI{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(token_id : felt) -> (str_len : felt, str : felt*):
     alloc_locals
     let (local base_uri_len, base_uri_str) = String_get(BASE_URI)
 
@@ -34,15 +45,17 @@ func tokenURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 end
 
 @view
-func baseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        str_len : felt, str : felt*):
+func baseURI{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}() -> (str_len : felt, str : felt*):
     let (str_len, str) = String_get(BASE_URI)
     return (str_len, str)
 end
 
 @view
-func appendLive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_len : felt, str : felt*) -> (str_len : felt, str : felt*):
+func appendLive{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_len : felt, str : felt*) -> (str_len : felt, str : felt*):
     alloc_locals
     let (local base_len, base_str) = String_get(APPENDED_STRING)
 
@@ -51,8 +64,9 @@ func appendLive{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 end
 
 @view
-func getAppendedString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-        str_len : felt, str : felt*):
+func getAppendedString{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}() -> (str_len : felt, str : felt*):
     let (str_len, str) = String_get(APPENDED_STRING)
     return (str_len, str)
 end
@@ -62,29 +76,33 @@ end
 #
 
 @external
-func writeCoreString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_len : felt, str : felt*):
+func writeCoreString{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_len : felt, str : felt*):
     String_set(CORE_STRING, str_len, str)
     return ()
 end
 
 @external
-func setBaseURI{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_len : felt, str : felt*):
+func setBaseURI{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_len : felt, str : felt*):
     String_set(BASE_URI, str_len, str)
     return ()
 end
 
 @external
-func writeBaseAppendString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_len : felt, str : felt*):
+func writeBaseAppendString{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_len : felt, str : felt*):
     String_set(APPENDED_STRING, str_len, str)
     return ()
 end
 
 @external
-func appendInStorage{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_len : felt, str : felt*):
+func appendInStorage{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_len : felt, str : felt*):
     alloc_locals  # required to avoid syscall_ptr and pedersen_ptr revokation
     let (base_len, base_str) = String_get(APPENDED_STRING)
 
@@ -95,7 +113,9 @@ func appendInStorage{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 end
 
 @external
-func deleteAppendedString{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+func deleteAppendedString{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}():
     String_delete(APPENDED_STRING)
     return ()
 end

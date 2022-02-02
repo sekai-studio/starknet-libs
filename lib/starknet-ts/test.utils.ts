@@ -1,9 +1,7 @@
 import { expect } from 'chai';
 
-import { StarknetError, TransactionError } from './signer';
-
 export default {
-  log: (str: string) => console.log('    ' + str),
+  log: (...str: string[]) => console.log('   ', ...str),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   done: (module: any) => module.afterAll(() => process.stdout.write('\u0007')), // Ring the notification bell on test end
 };
@@ -11,15 +9,16 @@ export default {
 /**
  * Expects a StarkNet transaction to fail
  * @param {Promise<any>} transaction - The transaction that should fail
+ * @param {string} [message] - The message returned from StarkNet
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function shouldFail(transaction: Promise<any>) {
+export async function shouldFail(transaction: Promise<any>, message: string = 'Transaction rejected.') {
   try {
     await transaction;
-    expect(true, 'Transaction should fail').to.be.eq(false);
-  } catch (e) {
-    const err = e as TransactionError;
-    expect(err.message).to.be.eq(StarknetError.TRANSACTION_FAILED);
+    expect.fail('Transaction should fail');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    expect(err.message).to.equal(message);
   }
 }
 
@@ -33,6 +32,6 @@ export async function tryCatch(fn: () => Promise<void>) {
     await fn();
   } catch (e) {
     console.error(e);
-    expect(true, 'Test failed').to.be.eq(false);
+    expect.fail('Test failed');
   }
 }

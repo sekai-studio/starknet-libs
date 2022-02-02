@@ -1,15 +1,18 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import unsigned_div_rem, assert_le
+from starkware.cairo.common.bitwise import bitwise_and
+from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
+from starkware.cairo.common.math import unsigned_div_rem, assert_le, assert_250_bit
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 
 from lib.cairo.Array import concat_arr
 
-const SHORT_STRING_MAX_LEN = 17  # The maximum length of a short string for
+const SHORT_STRING_MAX_LEN = 31  # The maximum character length of a short string
+const SHORT_STRING_MAX_VALUE = 2 ** 248 - 1  # The maximum value for a short string of 31 characters (= 0b11...11 = 0xff...ff)
 const CHAR_SIZE = 256  # Each character is encoded in utf-8 so 8-bit
+const EXTRACT_CHAR_MASK = 2 ** 248 - CHAR_SIZE  # Mask to retreive the last character (= 0b11...1100000000)
 const STRING_MAX_LEN = 2 ** 15  # The maximum index fot felt* in one direction given str[i] for i in [-2**15, 2**15) to allow back propagation for string inverse read/write operations
 
 @storage_var
@@ -34,8 +37,9 @@ end
 #   str_len (felt): The length of the string
 #   str (felt*): The string itself (in char array format)
 #
-func String_get{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_id : felt) -> (str_len : felt, str : felt*):
+func String_get{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_id : felt) -> (str_len : felt, str : felt*):
     alloc_locals
     let (str) = alloc()
 
@@ -52,8 +56,9 @@ func String_get{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     return (str_len, str)
 end
 
-func _get_ss_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        str_id : felt, ss_index : felt, ss_len : felt, str : felt*):
+func _get_ss_loop{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(str_id : felt, ss_index : felt, ss_len : felt, str : felt*):
     let (ss_felt) = strings_str.read(str_id, ss_index)
     # Get and separate each character in the short string
     _get_ss_char_loop(ss_felt, ss_index, ss_len, str)
@@ -66,15 +71,16 @@ func _get_ss_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_
     return ()
 end
 
-func _get_ss_char_loop{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        ss_felt : felt, ss_position : felt, char_index : felt, str : felt*):
+func _get_ss_char_loop{
+        syscall_ptr : felt*, bitwise_ptr : BitwiseBuiltin*, pedersen_ptr : HashBuiltin*,
+        range_check_ptr}(ss_felt : felt, ss_position : felt, char_index : felt, str : felt*):
     # Must be checked at beginning of function here for the case where str_len = x * SHORT_STRING_MAX_LEN
     if char_index == 0:
         return ()
     end
 
     # Extract last character from short string
-    let (ss_rem, char) = unsigned_div_rem(ss_felt, CHAR_SIZE)
+    let (ss_rem, char) = String_extract_last_char(ss_felt)
 
     # Store the character in the correct position, i.e. SHORT_STRING_INDEX * SHORT_STRING_MAX_LEN + INDEX_IN_SHORT_STRING
     assert str[ss_position * SHORT_STRING_MAX_LEN + char_index - 1] = char
@@ -92,6 +98,7 @@ end
 #
 func String_set{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         str_id : felt, str_len : felt, str : felt*):
+    alloc_locals
     with_attr error_message("String : exceeding max string length 2^15"):
         assert_le(str_len, STRING_MAX_LEN)
     end
@@ -143,6 +150,7 @@ end
 #
 func String_delete{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         str_id : felt):
+    alloc_locals
     let (str_len) = strings_len.read(str_id)
 
     if str_len == 0:
@@ -180,7 +188,8 @@ end
 #   elem (felt): The felt value to convert
 #
 # Returns:
-#   (felt, felt*): The length and content of the string
+#   str_len (felt): The length of the string
+#   str (felt*): The string itself (in char array format)
 #
 func String_felt_to_string{range_check_ptr}(elem : felt) -> (str_len : felt, str : felt*):
     let (str_seed) = alloc()
@@ -220,7 +229,8 @@ end
 #   str (felt*): The second string
 #
 # Returns:
-# (felt, felt*): The length and content of the string
+#   str_len (felt): The length of the string
+#   str (felt*): The string itself (in char array format)
 #
 func String_path_join{range_check_ptr}(
         base_len : felt, base : felt*, str_len : felt, str : felt*) -> (
@@ -244,9 +254,37 @@ end
 #   str (felt*): The second string
 #
 # Returns:
-# (felt, felt*): The length and content of the string
+#   str_len (felt): The length of the string
+#   str (felt*): The string itself (in char array format)
 #
 func String_append{range_check_ptr}(base_len : felt, base : felt*, str_len : felt, str : felt*) -> (
         res_len : felt, res : felt*):
     return concat_arr(base_len, base, str_len, str)
+end
+
+#
+# Extracts the last character from a short string and returns the characters before as a short string
+# Manages felt up to 2**248 - 1 (instead of unsigned_div_rem which is limited by rc_bound)
+# _On the down side it requires BitwiseBuiltin for the whole call chain_
+#
+# Parameters:
+#   ss (felt): The shortstring
+#
+# Returns:
+#   ss_rem (felt): All the characters before as a short string
+#   char (felt): The last character
+#
+func String_extract_last_char{bitwise_ptr : BitwiseBuiltin*, range_check_ptr}(ss : felt) -> (
+        ss_rem : felt, char : felt):
+    with_attr error_message("String : exceeding max short string value 2^248 - 1"):
+        # We should assert 248 bit here but for now it's "enough" for starters
+        # assert_le is limited by RANGE_CHECK_BOUND
+        assert_250_bit(ss)
+    end
+
+    let (masked_value) = bitwise_and(ss, EXTRACT_CHAR_MASK)
+    let ss_rem = masked_value / CHAR_SIZE
+    let char = ss - masked_value
+
+    return (ss_rem, char)
 end

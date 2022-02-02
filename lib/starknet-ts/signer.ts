@@ -7,14 +7,6 @@ import { getSelectorFromName } from 'starknet/dist/utils/stark';
 
 export type BigIntish = string | number | bigint;
 
-export enum StarknetError {
-  TRANSACTION_FAILED = 'Transaction rejected.',
-}
-
-export type TransactionError = {
-  message: StarknetError;
-};
-
 export default class Signer {
   private _starkKey: KeyPair;
   private _account: StarknetContract;

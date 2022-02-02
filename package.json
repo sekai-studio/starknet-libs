@@ -9,7 +9,6 @@
   "scripts": {
     "compile": "hardhat starknet-compile",
     "net": "starknet-devnet",
-    "start": "ts-node test.ts",
     "test": "hardhat test --no-compile"
   },
   "devDependencies": {
