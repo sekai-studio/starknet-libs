@@ -1,6 +1,4 @@
-import { uint256 } from 'starknet';
-
-/** Short string utils **/
+/** Short strings are useful to easily store strings on 31 characters or less though no manipulation is implemented once stored on-chain **/
 
 /**
  * Converts a string into a short string numeral
@@ -29,7 +27,7 @@ export function shortStringFeltToStr(felt: bigint): string {
   return newStrB.toString();
 }
 
-/** Strings utils **/
+/** Cairo Field Element Arrays allow for much bigger strings (up to 2^15 characters) and manipulation is implemented on-chain **/
 
 /**
  * Converts a string into an array of numerical characters in utf-8 encoding
@@ -48,18 +46,4 @@ export function strToFeltArr(str: string): bigint[] {
  */
 export function feltArrToStr(felts: bigint[]): string {
   return felts.reduce((memo, felt) => memo + Buffer.from(felt.toString(16), 'hex').toString(), '');
-}
-
-/** int256 utils **/
-
-/**
- * Converts an unsigned int256 into readable felt low and high values
- * @param {uint256.Uint256} uint - The uint256 to convert
- * @returns {{ low: bigint; high: bigint }} - The felt values
- */
-export function uint256ToFelt(uint: uint256.Uint256): { low: bigint; high: bigint } {
-  return {
-    low: BigInt(uint.low.toString()),
-    high: BigInt(uint.high.toString()),
-  };
 }

@@ -1,8 +1,8 @@
 # Sekai StarkNet Libraries
 
-A series of libraries to help using Cairo on StarkNet
+A series of libraries to help using Cairo on StarkNet.
 
-Examples for use in other Cairo contracts are provided in the `examples` directory
+Examples for use in other Cairo contracts are provided in [examples](examples).
 
 ## Contents
 - [Local run](#local-run)
@@ -25,6 +25,8 @@ yarn test
 
 ## Libraries
 ### Cairo String
-Library to store & manipulate strings in Cairo on StarkNet
+Library to store & manipulate strings in Cairo on StarkNet.
+
+Utilities to use those strings in TypeScript apps are located [here](utils/cairo_string.utils.ts).
 
 _The doc needs to be written but the code is commented using Python Docstrings standards (kinda)_
