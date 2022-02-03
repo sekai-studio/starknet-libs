@@ -4,7 +4,7 @@ import { StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime
 
 import { feltArrToStr, strToFeltArr, test, tryCatch } from '../utils';
 
-describe('String_Examples.cairo', function () {
+describe('Cairo String', function () {
   this.timeout('5m');
   let contractFactory: StarknetContractFactory;
   let contractAddress: string;

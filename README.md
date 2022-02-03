@@ -1,24 +1,30 @@
-# cairo-string
+# Sekai StarkNet Libraries
 
-A lib to manipulate strings in Cairo on StarkNet
+A series of libraries to help using Cairo on StarkNet
 
-_The doc needs to be written but the code is commented using Python Docstrings standards (kinda)_
+Examples for use in other Cairo contracts are provided in the `examples` directory
 
-## Use & test runs
+## Contents
+- [Local run](#local-run)
+- [Libraries](#libraries)
+  - [String](#cairo-string)
 
-Install the `cairo-lang` and `starknet-devnet` python librairies (a virtual environment is advised)
+## Local run
 ```
 pip install -r requirements.txt
-```
-Install the node modules
-```
 yarn
 ```
-Start the local devnet in a terminal
+To run the tests use one terminal for the local devnet
 ```
 yarn net
 ```
-Run the tests on another terminal
+And a second one to test
 ```
 yarn test
 ```
+
+## Libraries
+### Cairo String
+Library to store & manipulate strings in Cairo on StarkNet
+
+_The doc needs to be written but the code is commented using Python Docstrings standards (kinda)_
