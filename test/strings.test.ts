@@ -2,13 +2,7 @@ import { expect } from 'chai';
 import { starknet } from 'hardhat';
 import { StarknetContract, StarknetContractFactory } from 'hardhat/types/runtime';
 
-import { feltArrToStr, strToFeltArr } from '../lib/starknet-ts/starknet.utils';
-import test, { tryCatch } from '../lib/starknet-ts/test.utils';
-
-const CORE_STRING = 'Hello, world!';
-const BASE_URI = 'https://api.sekai.gg/api/v1/assets/';
-const BASE_URI_NO_END_SLASH = 'https://api.sekai.gg/api/v1/assets';
-const APPENDED_STRING = 'One, Two';
+import { feltArrToStr, strToFeltArr, test, tryCatch } from '../utils';
 
 describe('String_Examples.cairo', function () {
   this.timeout('5m');
@@ -20,9 +14,7 @@ describe('String_Examples.cairo', function () {
   });
 
   it('should deploy the contract', async function () {
-    test.log('Start deployment');
     const contract: StarknetContract = await contractFactory.deploy();
-    test.log('Deployed at', contract.address);
     contractAddress = contract.address;
   });
 
@@ -40,59 +32,53 @@ describe('String_Examples.cairo', function () {
   it('should write string in storage and retrieve it', async function () {
     await tryCatch(async () => {
       const contract: StarknetContract = contractFactory.getContractAt(contractAddress);
-      await contract.invoke('writeCoreString', { str: strToFeltArr(CORE_STRING) });
+      await contract.invoke('writeCoreString', { str: strToFeltArr('Hello, world!') });
       const { str_len, str } = await contract.call('readCoreString');
-      expect(str_len).to.equal(BigInt(CORE_STRING.length));
-      expect(feltArrToStr(str)).to.equal(CORE_STRING);
+      expect(str_len).to.equal(BigInt('Hello, world!'.length));
+      expect(feltArrToStr(str)).to.equal('Hello, world!');
     });
   });
 
   it('should store baseURI and get tokenURI from ID', async function () {
     await tryCatch(async () => {
       const contract: StarknetContract = contractFactory.getContractAt(contractAddress);
-      const tokenId = 123456789n;
-      const tokenId_str = tokenId.toString();
-      await contract.invoke('setBaseURI', { str: strToFeltArr(BASE_URI) });
-      const { str_len, str } = await contract.call('tokenURI', { token_id: tokenId });
-      expect(str_len).to.equal(BigInt(BASE_URI.length) + BigInt(tokenId_str.length));
-      expect(feltArrToStr(str)).to.equal(BASE_URI + tokenId_str);
+      await contract.invoke('setBaseURI', { str: strToFeltArr('https://api.sekai.gg/api/v1/assets/') });
+      const { str_len, str } = await contract.call('tokenURI', { token_id: 123456789n });
+      expect(str_len).to.equal(BigInt('https://api.sekai.gg/api/v1/assets/'.length) + 9n);
+      expect(feltArrToStr(str)).to.equal('https://api.sekai.gg/api/v1/assets/123456789');
     });
   });
 
   it('should do the same but with no slash at the end of baseURI', async function () {
     await tryCatch(async () => {
       const contract: StarknetContract = contractFactory.getContractAt(contractAddress);
-      const tokenId = 123456789n;
-      const tokenId_str = tokenId.toString();
-      await contract.invoke('setBaseURI', { str: strToFeltArr(BASE_URI_NO_END_SLASH) });
+      await contract.invoke('setBaseURI', { str: strToFeltArr('https://api.sekai.gg/api/v1/assets') });
       const { str_len: baseURI_len, str: baseURI } = await contract.call('baseURI');
-      expect(baseURI_len).to.equal(BigInt(BASE_URI_NO_END_SLASH.length));
-      expect(feltArrToStr(baseURI)).to.equal(BASE_URI_NO_END_SLASH);
+      expect(baseURI_len).to.equal(BigInt('https://api.sekai.gg/api/v1/assets'.length));
+      expect(feltArrToStr(baseURI)).to.equal('https://api.sekai.gg/api/v1/assets');
 
-      const { str_len, str } = await contract.call('tokenURI', { token_id: tokenId });
-      expect(str_len).to.equal(BigInt(BASE_URI_NO_END_SLASH.length) + 1n + BigInt(tokenId_str.length));
-      expect(feltArrToStr(str)).to.equal(BASE_URI_NO_END_SLASH + '/' + tokenId_str);
+      const { str_len, str } = await contract.call('tokenURI', { token_id: 987654321n });
+      expect(str_len).to.equal(BigInt('https://api.sekai.gg/api/v1/assets'.length) + 1n + 9n);
+      expect(feltArrToStr(str)).to.equal('https://api.sekai.gg/api/v1/assets/987654321');
     });
   });
 
   it('should append live (no storage change) to a string', async function () {
     const contract: StarknetContract = contractFactory.getContractAt(contractAddress);
-    const liveString = ', Three, Four.';
-    await contract.invoke('writeBaseAppendString', { str: strToFeltArr(APPENDED_STRING) });
+    await contract.invoke('writeBaseAppendString', { str: strToFeltArr('One, Two') });
     const { str_len, str } = await contract.call('appendLive', {
-      str: strToFeltArr(liveString),
+      str: strToFeltArr(', Three, Four.'),
     });
-    expect(str_len).to.equal(BigInt(APPENDED_STRING.length) + BigInt(liveString.length));
-    expect(feltArrToStr(str)).to.equal(APPENDED_STRING + liveString);
+    expect(str_len).to.equal(BigInt('One, Two'.length) + BigInt(', Three, Four.'.length));
+    expect(feltArrToStr(str)).to.equal('One, Two, Three, Four.');
   });
 
   it('should append to a string in storage', async function () {
     const contract: StarknetContract = contractFactory.getContractAt(contractAddress);
-    const appendString = ', Three, Four.';
-    await contract.invoke('appendInStorage', { str: strToFeltArr(appendString) });
+    await contract.invoke('appendInStorage', { str: strToFeltArr(', Three, Four.') });
     const { str_len, str } = await contract.call('getAppendedString');
-    expect(str_len).to.equal(BigInt(APPENDED_STRING.length) + BigInt(appendString.length));
-    expect(feltArrToStr(str)).to.equal(APPENDED_STRING + appendString);
+    expect(str_len).to.equal(BigInt('One, Two'.length) + BigInt(', Three, Four.'.length));
+    expect(feltArrToStr(str)).to.equal('One, Two, Three, Four.');
   });
 
   it('should delete a string from storage', async function () {

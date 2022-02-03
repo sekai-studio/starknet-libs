@@ -7,7 +7,7 @@ from starkware.cairo.common.math import unsigned_div_rem, assert_le, assert_250_
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
 
-from lib.cairo.Array import concat_arr
+from cairo_string.Array import concat_arr
 
 const SHORT_STRING_MAX_LEN = 31  # The maximum character length of a short string
 const SHORT_STRING_MAX_VALUE = 2 ** 248 - 1  # The maximum value for a short string of 31 characters (= 0b11...11 = 0xff...ff)

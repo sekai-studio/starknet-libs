@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-export default {
+export const test = {
   log: (...str: string[]) => console.log('   ', ...str),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   done: (module: any) => module.afterAll(() => process.stdout.write('\u0007')), // Ring the notification bell on test end
