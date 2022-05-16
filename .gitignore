@@ -1,11 +1,53 @@
 **/.DS_Store
-node_modules/
-yarn.lock
+artifacts/
 
-starknet-artifacts/
-cache/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Test & WIP files
-test.ts
-Math.cairo
-signer.ts
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+.tox/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# WIP files
+test/
+sekai_erc/
+sekai_token/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+node.json
