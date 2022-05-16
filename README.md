@@ -16,8 +16,18 @@ Examples for use in other Cairo contracts are provided in [examples](examples).
 
 To use the libary, simply install it using
 
-```
+```bash
 pip install sekai-starknet-libraries
+```
+
+To use the librairy in contracts then
+
+```cairo
+# contracts/MyContract.cairo
+
+%lang starknet
+
+from sekai_libs.string.store import String_set, String_get, String_delete
 ```
 
 ## Libraries
@@ -36,7 +46,7 @@ _The doc needs to be written but the code is commented using Python Docstrings s
 
 ## Local setup
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
