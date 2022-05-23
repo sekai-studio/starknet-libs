@@ -17,30 +17,28 @@ func concat_arr{range_check_ptr}(arr1_len : felt, arr1 : felt*, arr2_len : felt,
     return (arr1_len + arr2_len, res)
 end
 
-func check_arr_uniqueness{range_check_ptr}(arr_len : felt, arr : felt*) -> (is_unique : felt):
+func check_arr_uniqueness{range_check_ptr}(arr_len : felt, arr : felt*):
     alloc_locals
     let (local dict_start : DictAccess*) = alloc()
     let (local squashed_dict : DictAccess*) = alloc()
 
-    let (dict_end) = _build_dict(arr_len, arr, dict_start)
+    let (dict_end) = _build_dict(arr, arr_len, dict_start)
 
-    let (squashed_dict_end) = squash_dict(dict_start, dict_end, squashed_dict)
-
-    if squashed_dict_end - squashed_dict == arr_len * DictAccess.SIZE:
-        return (TRUE)
-    else:
-        return (FALSE)
+    with_attr error_message("Array: array is not unique"):
+        squash_dict(dict_start, dict_end, squashed_dict)
     end
+
+    return ()
 end
 
-func _build_dict(arr_len : felt, arr : felt*, dict : DictAccess*) -> (dict : DictAccess*):
-    if arr_len == 0:
+func _build_dict(arr : felt*, n_steps : felt, dict : DictAccess*) -> (dict : DictAccess*):
+    if n_steps == 0:
         return (dict)
     end
 
-    assert dict.key = [arr[arr_len - 1]]
+    assert dict.key = [arr]
     assert dict.prev_value = 0
     assert dict.new_value = 1
 
-    return _build_dict(arr_len - 1, arr, dict + DictAccess.SIZE)
+    return _build_dict(arr + 1, n_steps - 1, dict + DictAccess.SIZE)
 end
