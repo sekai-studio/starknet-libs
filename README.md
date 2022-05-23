@@ -50,6 +50,14 @@ _The doc needs to be written but the code is commented using Python Docstrings s
 pip install -r requirements.txt
 ```
 
+### M1 mac installation issues
+
+If you run into a `gmp.h` issue while trying to install `cairo-lang` on an M1 Mac, try running
+
+```
+CFLAGS=-I`brew --prefix gmp`/include LDFLAGS=-L`brew --prefix gmp`/lib pip install ecdsa fastecdsa sympy
+```
+
 Test: `make test`
 
 Build packages: `make build`
